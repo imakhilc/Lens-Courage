@@ -14,7 +14,7 @@ Work follows the milestones in `LENS_COURAGE_PHASE1_SPEC.md`; a milestone is onl
 6. **Notifications and polish** — reminder permission/scheduling, FCM, Remote Config, Analytics, Crashlytics, App Check, accessibility, offline queues, and explicit error recovery.
 7. **Release candidate QA** — physical Android, low-end device, permissions, offline/interruption, AI timeout, restart, and timezone-boundary checks.
 
-Current status: **Milestone 1 complete; Milestone 2 in progress.** The live Firestore project contains all 30 seeded challenges. Today and Path consume that catalog, challenge detail is implemented, and the Android VisionCamera record/preview/retry/accept flow works on a physical device. Audio playback, automatic maximum-duration stop, and local-session restoration after a full app restart are verified. Keep-awake and background-interruption handling remain before Milestone 2 is marked complete.
+Current status: **Milestone 1 complete; Milestone 2 implemented and pending final physical sign-off.** The live Firestore project contains all 30 seeded challenges. Today and Path consume that catalog, challenge detail is implemented, and the Android VisionCamera record/preview/retry/accept flow works on a physical device. Audio playback, automatic maximum-duration stop, and local-session restoration after a full app restart are verified. Recording now keeps the display awake and safely finalizes when the app leaves the foreground; those final two behaviors require physical verification.
 
 No Phase 1 feature is intentionally omitted. Items that cannot be completed safely will be recorded in **Blockers and TODOs** below with the affected acceptance criterion.
 
@@ -62,6 +62,8 @@ npm run typecheck
 
 - **Firebase console setup:** Google must be enabled under Authentication → Sign-in method, and the debug/release SHA-1 fingerprints must be registered for `studio.brittle.lenscourage`. Firestore must have a `(default)` database before profile creation can complete.
 - **Dependency audit:** npm reports nine high-severity `image-size` denial-of-service advisories through React Native 0.87's pinned Metro toolchain. npm's only automatic remedy currently downgrades `@react-native/metro-config` to 0.86.2, a breaking template mismatch, so no unsafe `npm audit fix --force` was applied. Recheck when the RN 0.87 Metro patch is published; this parser is build tooling and receives no app/user media at runtime.
-- **Milestone 2 remaining work:** implement and physically verify keep-awake behavior and safe background/interruption handling while recording. Physical-device audio playback, automatic maximum-duration stop, and accepted local-session restoration after a full app restart are verified.
+- **Milestone 2 final verification:** physically verify that the screen stays awake while recording and that backgrounding the app safely finalizes the take. Physical-device audio playback, automatic maximum-duration stop, and accepted local-session restoration after a full app restart are verified.
+- **Progress compilation:** the app now persists one signature opening phrase, prepends it to every video task, stores it on new local sessions, and lets users replay recorded Path nodes. Selecting clips and rendering/exporting the opt-in progress compilation remain TODO; raw videos must stay local unless the user explicitly chooses otherwise.
 - Milestones 3–7 remain pending. The current Milestone 2 accepted-take screen intentionally does not award CP or advance progression; those mutations become idempotent and server-authoritative in Milestone 3.
+
 # Lens-Courage

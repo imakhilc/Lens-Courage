@@ -1,11 +1,29 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import {
+  Alert,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Check, Clock3 } from 'lucide-react-native';
 import { BrandMark, Card, PrimaryButton, ProgressBar } from '../components/ui';
 import { useApp } from '../app/AppProvider';
 import { colors } from '../theme';
-import { PRIMARY_TAB_BAR_SPACE } from '../components/PrimaryTabBar';
+import {
+  PRIMARY_TAB_BAR_SPACE,
+  PRIMARY_TAB_TOP_SPACE,
+} from '../components/PrimaryTabBar';
+import { Shimmer } from '../components/Shimmer';
+
+const heroShimmer = {
+  baseColor: 'rgba(255,255,255,.16)',
+  highlightColor: 'rgba(255,255,255,.38)',
+};
+
 export function TodayScreen({ navigation }: any) {
   const {
     user,
@@ -13,7 +31,11 @@ export function TodayScreen({ navigation }: any) {
     challengesLoading,
     challengesError,
     localSessions,
+    localDataLoading,
+    clearDevData,
+    refreshData,
   } = useApp();
+  const [clearingDevData, setClearingDevData] = useState(false);
   const insets = useSafeAreaInsets();
   const challenge = challenges.find(
     item => item.order === (user?.currentChallengeOrder ?? 1),
@@ -21,16 +43,54 @@ export function TodayScreen({ navigation }: any) {
   const recordedSession = localSessions.find(
     session => session.challengeId === challenge?.id,
   );
+  const todayLoading =
+    challengesLoading || localDataLoading || (!challenge && !challengesError);
+  const confirmDevReset = () =>
+    Alert.alert(
+      '__DEV__ clear data',
+      'Reset local challenge history and permanently delete all locally recorded videos for this account?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear data',
+          style: 'destructive',
+          onPress: async () => {
+            setClearingDevData(true);
+            try {
+              await clearDevData();
+            } catch (cause) {
+              Alert.alert(
+                'Could not clear data',
+                cause instanceof Error
+                  ? cause.message
+                  : 'Rebuild the debug app and try again.',
+              );
+            } finally {
+              setClearingDevData(false);
+            }
+          },
+        },
+      ],
+    );
   return (
     <View style={s.safe}>
       <ScrollView
         contentContainerStyle={[
           s.content,
           {
-            paddingTop: insets.top + 8,
+            paddingTop: insets.top + PRIMARY_TAB_TOP_SPACE,
             paddingBottom: insets.bottom + PRIMARY_TAB_BAR_SPACE,
           },
         ]}
+        refreshControl={
+          <RefreshControl
+            colors={[colors.primary]}
+            onRefresh={refreshData}
+            progressBackgroundColor={colors.surface}
+            refreshing={challengesLoading || localDataLoading}
+            tintColor={colors.primary}
+          />
+        }
         showsVerticalScrollIndicator={false}
       >
         <View style={s.header}>
@@ -51,14 +111,13 @@ export function TodayScreen({ navigation }: any) {
             LOCAL PREVIEW · ADD GOOGLE-SERVICES.JSON FOR FIREBASE
           </Text>
         )}
-        {challengesLoading && (
-          <Text style={s.catalogMessage}>Loading today’s challenge…</Text>
-        )}
         {challengesError && (
           <Text style={s.catalogError}>{challengesError}</Text>
         )}
         <Text style={s.eyebrow}>
-          {recordedSession ? "TODAY'S REP · RECORDED" : "TODAY'S REP"}
+          {!todayLoading && recordedSession
+            ? "TODAY'S REP · RECORDED"
+            : "TODAY'S REP"}
         </Text>
         <View style={s.dayRow}>
           <Text style={s.title}>
@@ -69,43 +128,64 @@ export function TodayScreen({ navigation }: any) {
             DAY {challenge?.order ?? user?.currentChallengeOrder ?? 1}
           </Text>
         </View>
-        <Card style={s.hero}>
-          <View style={s.heroTop}>
-            <Text style={s.heroPill}>
-              {challenge?.stageName.toUpperCase() ?? 'YOUR PATH'}
+        {todayLoading ? (
+          <Card style={s.hero}>
+            <View style={s.heroTop}>
+              <Shimmer {...heroShimmer} style={s.shimmerPill} />
+              <Shimmer {...heroShimmer} style={s.shimmerReward} />
+            </View>
+            <Shimmer {...heroShimmer} style={s.shimmerTitle} />
+            <Shimmer {...heroShimmer} style={s.shimmerCopy} />
+            <Shimmer {...heroShimmer} style={s.shimmerCopyShort} />
+            <Shimmer {...heroShimmer} style={s.shimmerMeta} />
+            <Shimmer {...heroShimmer} style={s.shimmerButton} />
+          </Card>
+        ) : challenge ? (
+          <Card style={s.hero}>
+            <View style={s.heroTop}>
+              <Text style={s.heroPill}>
+                {challenge.stageName.toUpperCase()}
+              </Text>
+              <Text style={s.reward}>+{challenge.rewardCP} CP</Text>
+            </View>
+            <Text style={s.heroTitle}>{challenge.title}</Text>
+            <Text style={s.heroCopy}>{challenge.fullPrompt}</Text>
+            <View style={s.meta}>
+              <Clock3 color="white" size={17} strokeWidth={2.5} />
+              <Text style={s.metaText}>
+                {challenge.targetDurationSec} sec · Front camera
+              </Text>
+            </View>
+            <PrimaryButton
+              variant="inverted"
+              label={recordedSession ? 'Challenge recorded' : 'Start challenge'}
+              disabled={Boolean(recordedSession)}
+              onPress={() =>
+                navigation.navigate('ChallengeDetail', {
+                  challengeId: challenge.id,
+                })
+              }
+            />
+          </Card>
+        ) : (
+          <Card style={s.unavailableHero}>
+            <Text style={s.unavailableTitle}>Challenge unavailable</Text>
+            <Text style={s.unavailableCopy}>
+              Reconnect and reopen the app to load your courage path.
             </Text>
-            <Text style={s.reward}>+{challenge?.rewardCP ?? 0} CP</Text>
-          </View>
-          <Text style={s.heroTitle}>
-            {challenge?.title ?? 'Challenge unavailable'}
-          </Text>
-          <Text style={s.heroCopy}>
-            {challenge?.fullPrompt ?? 'Reconnect to load your challenge path.'}
-          </Text>
-          <View style={s.meta}>
-            <Clock3 color="white" size={17} strokeWidth={2.5} />
-            <Text style={s.metaText}>
-              {challenge?.targetDurationSec ?? '—'} sec · Front camera
-            </Text>
-          </View>
-          <PrimaryButton
-            variant="inverted"
-            label={recordedSession ? 'Challenge recorded' : 'Start challenge'}
-            disabled={!challenge || Boolean(recordedSession)}
-            onPress={() =>
-              navigation.navigate('ChallengeDetail', {
-                challengeId: challenge?.id,
-              })
-            }
-          />
-        </Card>
+          </Card>
+        )}
         <Card style={s.quests}>
           <View style={s.row}>
             <View>
               <Text style={s.cardTitle}>Daily quests</Text>
               <Text style={s.cardSub}>Complete all 3 for +20 CP</Text>
             </View>
-            <Text style={s.counter}>{recordedSession ? 1 : 0} / 3</Text>
+            {localDataLoading ? (
+              <Shimmer style={s.shimmerCounter} />
+            ) : (
+              <Text style={s.counter}>{recordedSession ? 1 : 0} / 3</Text>
+            )}
           </View>
           {[
             'Complete today’s challenge',
@@ -122,7 +202,9 @@ export function TodayScreen({ navigation }: any) {
                     : `0 / ${i === 2 ? '30 sec' : '1'}`}
                 </Text>
               </View>
-              {i === 0 && recordedSession ? (
+              {i === 0 && localDataLoading ? (
+                <Shimmer style={s.shimmerQuestState} />
+              ) : i === 0 && recordedSession ? (
                 <View style={s.questDone}>
                   <Check color="white" size={16} strokeWidth={3} />
                 </View>
@@ -147,6 +229,25 @@ export function TodayScreen({ navigation }: any) {
             <Text style={s.weekCount}>0 / 5</Text>
           </View>
         </Card>
+        {__DEV__ && (
+          <Pressable
+            accessibilityRole="button"
+            disabled={clearingDevData}
+            onPress={confirmDevReset}
+            style={({ pressed }) => [
+              s.devClear,
+              pressed && s.devClearPressed,
+              clearingDevData && s.devClearDisabled,
+            ]}
+          >
+            <Text style={s.devClearLabel}>__DEV__</Text>
+            <Text style={s.devClearText}>
+              {clearingDevData
+                ? 'Clearing data…'
+                : 'Clear local challenge data'}
+            </Text>
+          </Pressable>
+        )}
       </ScrollView>
     </View>
   );
@@ -222,7 +323,27 @@ const s = StyleSheet.create({
     borderWidth: 0,
     padding: 16,
   },
+  unavailableHero: { marginTop: 12 },
+  unavailableTitle: { fontSize: 19, fontWeight: '900', color: colors.ink },
+  unavailableCopy: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.muted,
+    marginTop: 5,
+  },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between' },
+  shimmerPill: { width: 94, height: 29, borderRadius: 99 },
+  shimmerReward: { width: 68, height: 29, borderRadius: 99 },
+  shimmerTitle: { width: '64%', height: 32, borderRadius: 9, marginTop: 17 },
+  shimmerCopy: { width: '100%', height: 15, borderRadius: 6, marginTop: 14 },
+  shimmerCopyShort: {
+    width: '76%',
+    height: 15,
+    borderRadius: 6,
+    marginTop: 7,
+  },
+  shimmerMeta: { width: 142, height: 17, borderRadius: 7, marginTop: 14 },
+  shimmerButton: { height: 58, borderRadius: 18, marginTop: 13 },
   heroPill: {
     color: 'white',
     fontWeight: '800',
@@ -273,6 +394,7 @@ const s = StyleSheet.create({
     padding: 7,
     borderRadius: 99,
   },
+  shimmerCounter: { width: 52, height: 31, borderRadius: 99 },
   quest: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -308,6 +430,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.teal,
   },
+  shimmerQuestState: { width: 24, height: 24, borderRadius: 12 },
   weekly: { marginTop: 10 },
   weekRow: {
     flexDirection: 'row',
@@ -316,4 +439,30 @@ const s = StyleSheet.create({
     marginTop: 11,
   },
   weekCount: { fontWeight: '900', color: colors.ink },
+  devClear: {
+    minHeight: 50,
+    marginTop: 18,
+    marginBottom: 8,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#F2BEC2',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#FFF5F6',
+  },
+  devClearLabel: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: colors.danger,
+    backgroundColor: '#FFE1E4',
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderRadius: 7,
+  },
+  devClearText: { fontSize: 13, fontWeight: '900', color: colors.danger },
+  devClearPressed: { opacity: 0.7 },
+  devClearDisabled: { opacity: 0.45 },
 });

@@ -17,9 +17,11 @@ import { PathScreen } from '../../screens/PathScreen';
 import { ChallengeDetailScreen } from '../../screens/ChallengeDetailScreen';
 import { RecordingScreen } from '../../screens/RecordingScreen';
 import { TakeAcceptedScreen } from '../../screens/TakeAcceptedScreen';
+import { LocalRecordingScreen } from '../../screens/LocalRecordingScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+
 const theme = {
   ...DefaultTheme,
   colors: {
@@ -70,18 +72,45 @@ export function RootNavigator() {
   return (
     <NavigationContainer theme={theme}>
       <Stack.Navigator
-        screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
+        screenOptions={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          navigationBarColor: colors.surface,
+          navigationBarTranslucent: false,
+        }}
       >
         {!user ? (
           <Stack.Screen name="Login" component={LoginScreen} />
         ) : user.onboardingComplete ? (
           <>
-            <Stack.Screen name="Main" component={MainTabs} />
+            <Stack.Screen
+              name="Main"
+              component={MainTabs}
+              options={{
+                navigationBarColor: 'transparent',
+                navigationBarTranslucent: true,
+              }}
+            />
             <Stack.Screen
               name="ChallengeDetail"
               component={ChallengeDetailScreen}
+              options={{
+                navigationBarColor: colors.surface,
+                navigationBarTranslucent: false,
+              }}
             />
-            <Stack.Screen name="Recording" component={RecordingScreen} />
+            <Stack.Screen
+              name="Recording"
+              component={RecordingScreen}
+              options={{
+                navigationBarColor: 'transparent',
+                navigationBarTranslucent: true,
+              }}
+            />
+            <Stack.Screen
+              name="LocalRecording"
+              component={LocalRecordingScreen}
+            />
             <Stack.Screen
               name="TakeAccepted"
               component={TakeAcceptedScreen}

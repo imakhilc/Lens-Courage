@@ -4,17 +4,25 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
+import { NativeModules } from 'react-native';
 import {
   bootstrapUser,
   finishOnboarding,
+  saveOpeningPhrasePreference,
   signInWithGoogle as authenticateWithGoogle,
 } from '../firebase/bootstrap';
 import { LocalSession, OnboardingDraft, UserProfile } from '../types/models';
 import { Challenge } from '../types/models';
 import { fetchChallenges } from '../firebase/challenges';
-import { getLocalSessions } from '../storage/localSessions';
+import { clearLocalSessions, getLocalSessions } from '../storage/localSessions';
+import {
+  clearOpeningPhrase,
+  getOpeningPhrase,
+  saveOpeningPhrase,
+} from '../storage/openingPhrase';
 
 type AppContextValue = {
   loading: boolean;
@@ -25,11 +33,16 @@ type AppContextValue = {
   challengesLoading: boolean;
   challengesError?: string;
   localSessions: LocalSession[];
+  localDataLoading: boolean;
+  openingPhrase?: string;
   draft: OnboardingDraft;
   setDraft: (value: Partial<OnboardingDraft>) => void;
   signInWithGoogle: () => Promise<void>;
   completeOnboarding: () => Promise<void>;
   registerLocalSession: (session: LocalSession) => void;
+  chooseOpeningPhrase: (phrase: string) => Promise<void>;
+  clearDevData: () => Promise<void>;
+  refreshData: () => void;
   retry: () => void;
 };
 const AppContext = createContext<AppContextValue | undefined>(undefined);
@@ -43,8 +56,12 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [challengesError, setChallengesError] = useState<string>();
   const [user, setUser] = useState<UserProfile>();
   const [localSessions, setLocalSessions] = useState<LocalSession[]>([]);
+  const [localDataLoading, setLocalDataLoading] = useState(true);
+  const [openingPhrase, setOpeningPhrase] = useState<string>();
   const [draft, updateDraft] = useState<OnboardingDraft>({});
   const [attempt, setAttempt] = useState(0);
+  const [dataAttempt, setDataAttempt] = useState(0);
+  const openingPhraseSaveQueue = useRef<Promise<void>>(Promise.resolve());
   useEffect(() => {
     let alive = true;
     setLoading(true);
@@ -100,20 +117,33 @@ export function AppProvider({ children }: PropsWithChildren) {
     return () => {
       alive = false;
     };
-  }, [user?.onboardingComplete]);
+  }, [dataAttempt, user?.onboardingComplete]);
   useEffect(() => {
     if (!user?.uid) {
       setLocalSessions([]);
+      setOpeningPhrase(undefined);
+      setLocalDataLoading(false);
       return;
     }
     let alive = true;
-    getLocalSessions(user.uid).then(sessions => {
-      if (alive) setLocalSessions(sessions);
-    });
+    setLocalDataLoading(true);
+    Promise.all([getLocalSessions(user.uid), getOpeningPhrase(user.uid)])
+      .then(([sessions, phrase]) => {
+        if (!alive) return;
+        setLocalSessions(sessions);
+        const resolvedPhrase = user.openingPhrase ?? phrase ?? undefined;
+        setOpeningPhrase(resolvedPhrase);
+        if (user.openingPhrase && user.openingPhrase !== phrase) {
+          void saveOpeningPhrase(user.uid, user.openingPhrase);
+        }
+      })
+      .finally(() => {
+        if (alive) setLocalDataLoading(false);
+      });
     return () => {
       alive = false;
     };
-  }, [user?.uid]);
+  }, [dataAttempt, user?.openingPhrase, user?.uid]);
   const setDraft = useCallback(
     (value: Partial<OnboardingDraft>) =>
       updateDraft(old => ({ ...old, ...value })),
@@ -140,6 +170,20 @@ export function AppProvider({ children }: PropsWithChildren) {
       setUser(await finishOnboarding(user, draft));
     }
   }, [draft, user]);
+  const clearDevData = useCallback(async () => {
+    if (!__DEV__ || !user) return;
+    const removedSessions = await getLocalSessions(user.uid);
+    const devData = NativeModules.LensCourageDevData as {
+      deleteLocalRecordings: (paths: string[]) => Promise<number>;
+    } | null;
+    await devData?.deleteLocalRecordings(
+      removedSessions.map(session => session.localVideoPath),
+    );
+    await clearLocalSessions(user.uid);
+    await clearOpeningPhrase(user.uid);
+    setLocalSessions([]);
+    setOpeningPhrase(undefined);
+  }, [user]);
   return (
     <AppContext.Provider
       value={{
@@ -151,6 +195,8 @@ export function AppProvider({ children }: PropsWithChildren) {
         challengesLoading,
         challengesError,
         localSessions,
+        localDataLoading,
+        openingPhrase,
         draft,
         setDraft,
         signInWithGoogle,
@@ -160,6 +206,38 @@ export function AppProvider({ children }: PropsWithChildren) {
             session,
             ...existing.filter(item => item.id !== session.id),
           ]),
+        chooseOpeningPhrase: async phrase => {
+          if (!user) return;
+          const phraseIsLocked =
+            user.completedChallengeCount > 0 ||
+            user.currentChallengeOrder > 1 ||
+            localSessions.some(session => session.openingPhrase);
+          if (phraseIsLocked && openingPhrase !== phrase) {
+            throw new Error(
+              'Your signature opening is locked after your first completed challenge.',
+            );
+          }
+
+          // Reflect the choice immediately; remote persistence must not make
+          // this small interaction feel network-bound.
+          setUser(profile =>
+            profile ? { ...profile, openingPhrase: phrase } : profile,
+          );
+          setOpeningPhrase(phrase);
+
+          const saveTask = openingPhraseSaveQueue.current
+            .catch(() => undefined)
+            .then(async () => {
+              await Promise.all([
+                saveOpeningPhrasePreference(user.uid, phrase),
+                saveOpeningPhrase(user.uid, phrase),
+              ]);
+            });
+          openingPhraseSaveQueue.current = saveTask;
+          await saveTask;
+        },
+        clearDevData,
+        refreshData: () => setDataAttempt(value => value + 1),
         retry: () => setAttempt(x => x + 1),
       }}
     >

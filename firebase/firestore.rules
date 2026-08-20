@@ -41,7 +41,11 @@ service cloud.firestore {
         && request.resource.data.currentStreak == resource.data.currentStreak
         && request.resource.data.longestStreak == resource.data.longestStreak
         && request.resource.data.currentChallengeOrder == resource.data.currentChallengeOrder
-        && request.resource.data.completedChallengeCount == resource.data.completedChallengeCount;
+        && request.resource.data.completedChallengeCount == resource.data.completedChallengeCount
+        && (
+          resource.data.completedChallengeCount == 0
+          || request.resource.data.get('openingPhrase', '') == resource.data.get('openingPhrase', '')
+        );
 
       allow delete: if false;
 

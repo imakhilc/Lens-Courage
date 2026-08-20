@@ -24,6 +24,7 @@ const timezone = () =>
   Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 const defaultProfile = (uid: string): UserProfile => ({
   uid,
+  displayName: getAuth(getApp()).currentUser?.displayName ?? undefined,
   onboardingComplete: false,
   timezone: timezone(),
   currentChallengeOrder: 1,
@@ -111,4 +112,15 @@ export async function finishOnboarding(
     { merge: true },
   );
   return updated;
+}
+
+export async function saveOpeningPhrasePreference(
+  uid: string,
+  openingPhrase: string,
+) {
+  await setDoc(
+    doc(getFirestore(getApp()), 'users', uid),
+    { openingPhrase, updatedAt: serverTimestamp() },
+    { merge: true },
+  );
 }

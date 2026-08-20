@@ -643,13 +643,13 @@ Full seed data is supplied separately in `/seed/challenges.json`.
 
 ## Stage 1 — Solo Lens
 
-### 1. Just Say Hi
+### 1. One Thing Today
 
 Duration: 10–20 sec.
 
 Prompt:
 
-“Look into the lens and say your name, then one thing you did today.”
+“Look into the lens and share one thing you did today.”
 
 Rules:
 
@@ -688,11 +688,11 @@ One-take bonus enabled.
 
 ### 8. Start Immediately
 
-“Press record and begin your first sentence within three seconds.”
+“After your signature opening, move directly into your first real sentence without a warm-up.”
 
-### 9. No ‘Hey Guys’
+### 9. Lead With the Idea
 
-“Start a video without ‘hey guys’, ‘so’, or an apology.”
+“After your signature opening, start with a specific statement or question without apologizing for recording.”
 
 ### 10. Tiny Story
 
@@ -999,6 +999,15 @@ For one-take challenges:
 
 ## Camera rules
 
+- Before their first recording, the user chooses one signature opening from a
+  curated list, for example “Hi, I am Akhil”, “Hi guys”, or “Hey everyone”.
+- Prepend that same signature opening to every video-task instruction and show
+  it prominently on the camera prompt.
+- Persist the selected opening on the Firestore user profile and local device,
+  and store it with each session so locally kept recordings can later be
+  assembled into an opt-in progress compilation.
+- The user may edit the opening before accepting their first take. Lock it
+  after Day 1 completion so every later challenge uses the same phrase.
 - Portrait orientation only in Phase 1.
 - Record 720p or 1080p depending device capability; prioritize stable storage size.
 - H.264/AAC MP4 is preferred.
@@ -1370,6 +1379,7 @@ interface SessionDoc {
   durationMs: number;
   retryCount: number;
   oneTakeQualified: boolean;
+  openingPhrase: string;
 
   completionStatus: 'recorded' | 'completed';
   rewardGranted: boolean;

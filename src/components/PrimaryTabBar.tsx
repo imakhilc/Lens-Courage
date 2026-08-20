@@ -28,6 +28,7 @@ const tabDetails = {
 } as const;
 
 export const PRIMARY_TAB_BAR_SPACE = 92;
+export const PRIMARY_TAB_TOP_SPACE = 8;
 
 export function PrimaryTabBar({
   state,

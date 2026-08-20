@@ -1,13 +1,18 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Animated,
+  AppState,
+  Easing,
   Linking,
   Modal,
+  NativeModules,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
+import { BlurView } from '@react-native-community/blur';
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -26,19 +31,20 @@ import {
   Camera as CameraIcon,
   AlertTriangle,
   CheckCircle2,
-  CircleStop,
   Clock3,
   FastForward,
   Pause,
   Play,
   Rewind,
   RotateCcw,
+  Volume2,
+  VolumeX,
   X,
 } from 'lucide-react-native';
 import {
-  BackButton,
   FloatingActionDock,
   PrimaryButton,
+  ScreenNavigationBar,
 } from '../components/ui';
 import { useApp } from '../app/AppProvider';
 import { colors } from '../theme';
@@ -52,31 +58,75 @@ const formatTime = (seconds: number) =>
     .toString()
     .padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
 
-function RecordedTakePreview({ filePath }: { filePath: string }) {
-  const [isPlaying, setIsPlaying] = useState(true);
+const keepAwake = NativeModules.LensCourageKeepAwake as {
+  activate: () => void;
+  deactivate: () => void;
+} | null;
+
+export function RecordedTakePreview({
+  filePath,
+  fillAxis = 'width',
+  autoPlay = true,
+}: {
+  filePath: string;
+  fillAxis?: 'width' | 'height';
+  autoPlay?: boolean;
+}) {
+  const [isPlaying, setIsPlaying] = useState(autoPlay);
+  const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const ended = useRef(false);
   const player = useVideoPlayer(`file://${filePath}`, instance => {
-    instance.loop = true;
-    instance.play();
+    instance.loop = false;
+    if (autoPlay) instance.play();
   });
+
+  const stopAtEnd = useCallback(() => {
+    if (ended.current) return;
+    ended.current = true;
+    player.loop = false;
+    player.pause();
+    player.currentTime = 0;
+    setCurrentTime(0);
+    setIsPlaying(false);
+  }, [player]);
 
   useEvent(
     player,
     'onPlaybackStateChange',
-    useCallback(event => setIsPlaying(event.isPlaying), []),
+    useCallback(
+      event => {
+        if (ended.current && event.isPlaying) {
+          player.pause();
+          setIsPlaying(false);
+          return;
+        }
+        setIsPlaying(event.isPlaying);
+      },
+      [player],
+    ),
   );
   useEvent(
     player,
     'onProgress',
     useCallback(
       event => {
+        const nextDuration = player.duration;
+        setDuration(nextDuration);
+        if (
+          nextDuration > 0 &&
+          event.currentTime >= Math.max(0, nextDuration - 0.08)
+        ) {
+          stopAtEnd();
+          return;
+        }
         setCurrentTime(event.currentTime);
-        setDuration(player.duration);
       },
-      [player],
+      [player, stopAtEnd],
     ),
   );
+  useEvent(player, 'onEnd', stopAtEnd);
 
   const seekBy = (seconds: number) => {
     player.currentTime = Math.max(
@@ -86,7 +136,20 @@ function RecordedTakePreview({ filePath }: { filePath: string }) {
   };
   const togglePlayback = () => {
     if (player.isPlaying) player.pause();
-    else player.play();
+    else {
+      if (ended.current) {
+        ended.current = false;
+        player.currentTime = 0;
+        setCurrentTime(0);
+      }
+      player.loop = false;
+      player.play();
+    }
+  };
+  const toggleMuted = () => {
+    const nextMuted = !isMuted;
+    player.muted = nextMuted;
+    setIsMuted(nextMuted);
   };
   const progress = duration > 0 ? currentTime / duration : 0;
 
@@ -94,7 +157,9 @@ function RecordedTakePreview({ filePath }: { filePath: string }) {
     <View style={s.player}>
       <VideoView
         player={player}
-        style={s.playerVideo}
+        style={
+          fillAxis === 'height' ? s.playerVideoByHeight : s.playerVideoByWidth
+        }
         resizeMode="cover"
         controls={false}
         surfaceType="texture"
@@ -133,6 +198,19 @@ function RecordedTakePreview({ filePath }: { filePath: string }) {
           >
             <FastForward color="white" size={21} />
           </Pressable>
+          <Pressable
+            accessibilityLabel={isMuted ? 'Unmute video' : 'Mute video'}
+            accessibilityState={{ checked: isMuted }}
+            hitSlop={10}
+            onPress={toggleMuted}
+            style={s.playerControlButton}
+          >
+            {isMuted ? (
+              <VolumeX color="white" size={21} />
+            ) : (
+              <Volume2 color="white" size={21} />
+            )}
+          </Pressable>
           <Text style={s.playerTime}>
             {formatTime(Math.floor(currentTime))} /{' '}
             {formatTime(Math.floor(duration))}
@@ -144,7 +222,7 @@ function RecordedTakePreview({ filePath }: { filePath: string }) {
 }
 
 export function RecordingScreen({ navigation, route }: any) {
-  const { user, challenges, registerLocalSession } = useApp();
+  const { user, challenges, registerLocalSession, openingPhrase } = useApp();
   const insets = useSafeAreaInsets();
   const challenge = challenges.find(
     item => item.id === route.params?.challengeId,
@@ -159,7 +237,13 @@ export function RecordingScreen({ navigation, route }: any) {
     fileType: 'mp4',
   });
   const recorder = useRef<Recorder | null>(null);
+  const recordingRef = useRef(false);
+  const stoppingRef = useRef(false);
+  const interruptedRef = useRef(false);
   const startedAt = useRef(0);
+  const [appActive, setAppActive] = useState(
+    AppState.currentState === 'active',
+  );
   const [permissionExplained, setPermissionExplained] = useState(
     cameraPermission.hasPermission && microphonePermission.hasPermission,
   );
@@ -172,8 +256,38 @@ export function RecordingScreen({ navigation, route }: any) {
   const [error, setError] = useState<string>();
   const [saving, setSaving] = useState(false);
   const [showDiscardWarning, setShowDiscardWarning] = useState(false);
+  const sheetBackdropOpacity = useRef(new Animated.Value(0)).current;
+  const sheetTranslateY = useRef(new Animated.Value(48)).current;
   const pendingNavigationAction = useRef<any>(undefined);
   const discarding = useRef(false);
+
+  useEffect(() => {
+    if (!showDiscardWarning) return;
+    sheetBackdropOpacity.setValue(0);
+    sheetTranslateY.setValue(48);
+    Animated.parallel([
+      Animated.timing(sheetBackdropOpacity, {
+        toValue: 1,
+        duration: 220,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.timing(sheetTranslateY, {
+        toValue: 0,
+        duration: 280,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [sheetBackdropOpacity, sheetTranslateY, showDiscardWarning]);
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+      navigationBarColor: filePath ? colors.surface : 'transparent',
+      navigationBarTranslucent: !filePath,
+    });
+  }, [filePath, navigation]);
 
   useEffect(() => {
     if (!recording) return;
@@ -183,6 +297,36 @@ export function RecordingScreen({ navigation, route }: any) {
     );
     return () => clearInterval(timer);
   }, [recording]);
+
+  useEffect(() => {
+    if (recording) keepAwake?.activate();
+    else keepAwake?.deactivate();
+    return () => keepAwake?.deactivate();
+  }, [recording]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextState => {
+      const active = nextState === 'active';
+      setAppActive(active);
+      if (!active && recordingRef.current && !stoppingRef.current) {
+        stoppingRef.current = true;
+        interruptedRef.current = true;
+        recorder.current
+          ?.stopRecording()
+          .catch(() => {
+            recordingRef.current = false;
+            setRecording(false);
+            setError(
+              'Recording was interrupted and could not be saved. Please try again.',
+            );
+          })
+          .finally(() => {
+            stoppingRef.current = false;
+          });
+      }
+    });
+    return () => subscription.remove();
+  }, []);
 
   useEffect(
     () =>
@@ -217,9 +361,17 @@ export function RecordingScreen({ navigation, route }: any) {
       );
   };
   const finishRecording = (path: string) => {
+    recordingRef.current = false;
+    recorder.current = null;
     setRecording(false);
     setFilePath(path);
     setDurationMs(Date.now() - startedAt.current);
+    if (interruptedRef.current) {
+      setError(
+        'Recording stopped safely when the app left the foreground. Review this take or try again.',
+      );
+      interruptedRef.current = false;
+    }
   };
   const startRecording = async () => {
     if (!ready) return setError('Camera is still getting ready.');
@@ -234,10 +386,13 @@ export function RecordingScreen({ navigation, route }: any) {
       await nextRecorder.startRecording(
         path => finishRecording(path),
         cause => {
+          recordingRef.current = false;
+          recorder.current = null;
           setRecording(false);
           setError(cause.message);
         },
       );
+      recordingRef.current = true;
       setRecording(true);
     } catch (cause) {
       setError(
@@ -246,12 +401,16 @@ export function RecordingScreen({ navigation, route }: any) {
     }
   };
   const stopRecording = async () => {
+    if (stoppingRef.current) return;
+    stoppingRef.current = true;
     try {
       await recorder.current?.stopRecording();
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : 'Recording could not stop.',
       );
+    } finally {
+      stoppingRef.current = false;
     }
   };
   const discardTake = async () => {
@@ -268,20 +427,53 @@ export function RecordingScreen({ navigation, route }: any) {
     if (action) navigation.dispatch(action);
     else navigation.goBack();
   };
+  const closeDiscardWarning = () => {
+    Animated.parallel([
+      Animated.timing(sheetBackdropOpacity, {
+        toValue: 0,
+        duration: 160,
+        useNativeDriver: true,
+      }),
+      Animated.timing(sheetTranslateY, {
+        toValue: 48,
+        duration: 190,
+        easing: Easing.in(Easing.quad),
+        useNativeDriver: true,
+      }),
+    ]).start(({ finished }) => {
+      if (finished) setShowDiscardWarning(false);
+    });
+  };
   const discardWarning = (
     <Modal
-      animationType="fade"
-      onRequestClose={() => setShowDiscardWarning(false)}
+      animationType="none"
+      onRequestClose={closeDiscardWarning}
       statusBarTranslucent
       transparent
       visible={showDiscardWarning}
     >
-      <Pressable
-        accessibilityLabel="Keep recording"
-        onPress={() => setShowDiscardWarning(false)}
-        style={s.sheetBackdrop}
-      >
-        <Pressable onPress={() => undefined} style={s.sheet}>
+      <View style={s.sheetBackdrop}>
+        <Animated.View
+          pointerEvents="none"
+          style={[s.sheetScrim, { opacity: sheetBackdropOpacity }]}
+        >
+          <BlurView
+            autoUpdate
+            blurAmount={18}
+            blurRadius={16}
+            blurType="dark"
+            overlayColor="rgba(17,18,24,.32)"
+            style={s.sheetBlur}
+          />
+        </Animated.View>
+        <Pressable
+          accessibilityLabel="Keep recording"
+          onPress={closeDiscardWarning}
+          style={StyleSheet.absoluteFill}
+        />
+        <Animated.View
+          style={[s.sheet, { transform: [{ translateY: sheetTranslateY }] }]}
+        >
           <View style={s.sheetHandle} />
           <Text style={s.sheetTitle}>Discard this take?</Text>
           <Text style={s.sheetCopy}>
@@ -290,13 +482,13 @@ export function RecordingScreen({ navigation, route }: any) {
           </Text>
           <PrimaryButton
             label={recording ? 'Keep recording' : 'Keep this take'}
-            onPress={() => setShowDiscardWarning(false)}
+            onPress={closeDiscardWarning}
           />
           <Pressable onPress={discardTake} style={s.sheetDiscard}>
             <Text style={s.sheetDiscardText}>Discard and leave</Text>
           </Pressable>
-        </Pressable>
-      </Pressable>
+        </Animated.View>
+      </View>
     </Modal>
   );
   const retry = () => {
@@ -323,6 +515,7 @@ export function RecordingScreen({ navigation, route }: any) {
         oneTakeQualified: challenge.oneTakeBonus && retryCount === 0,
         completionStatus: 'recorded',
         localVideoPath: filePath,
+        openingPhrase,
       } as const;
       await saveLocalSession(localSession);
       registerLocalSession(localSession);
@@ -380,16 +573,14 @@ export function RecordingScreen({ navigation, route }: any) {
     );
   if (filePath)
     return (
-      <SafeAreaView style={s.previewSafe}>
+      <SafeAreaView edges={['left', 'right']} style={s.previewSafe}>
         {discardWarning}
+        <ScreenNavigationBar
+          label="REVIEW YOUR TAKE"
+          title={challenge.title}
+          onBack={navigation.goBack}
+        />
         <View style={s.previewContent}>
-          <View style={s.previewHeader}>
-            <BackButton onPress={navigation.goBack} />
-            <View style={s.previewHeading}>
-              <Text style={s.previewEyebrow}>REVIEW YOUR TAKE</Text>
-              <Text style={s.previewTitle}>{challenge.title}</Text>
-            </View>
-          </View>
           <View style={s.previewCard}>
             <View style={s.previewVideo}>
               <RecordedTakePreview filePath={filePath} />
@@ -465,7 +656,7 @@ export function RecordingScreen({ navigation, route }: any) {
       <Camera
         style={StyleSheet.absoluteFill}
         device={device}
-        isActive={isFocused}
+        isActive={isFocused && appActive}
         outputs={[videoOutput]}
         orientationSource="device"
         mirrorMode="auto"
@@ -492,6 +683,9 @@ export function RecordingScreen({ navigation, route }: any) {
       </View>
       <View style={s.prompt}>
         <Text style={s.promptLabel}>YOUR PROMPT</Text>
+        {openingPhrase && (
+          <Text style={s.openingPrompt}>Start: “{openingPhrase}”</Text>
+        )}
         <Text style={s.promptText}>{challenge.fullPrompt}</Text>
         <Text style={s.hint}>Look at the lens, not your preview.</Text>
       </View>
@@ -504,7 +698,7 @@ export function RecordingScreen({ navigation, route }: any) {
           style={[s.record, recording && s.stop]}
         >
           {recording ? (
-            <CircleStop color="white" size={38} fill="white" />
+            <View style={s.stopInner} />
           ) : (
             <View style={s.recordInner} />
           )}
@@ -527,7 +721,16 @@ const s = StyleSheet.create({
   sheetBackdrop: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(17,18,24,.48)',
+  },
+  sheetScrim: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+  sheetBlur: {
+    flex: 1,
   },
   sheet: {
     paddingHorizontal: 20,
@@ -576,23 +779,9 @@ const s = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 142,
   },
-  previewHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  previewHeading: { flex: 1 },
-  previewEyebrow: {
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1.2,
-    color: colors.primary,
-  },
-  previewTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: colors.ink,
-    marginTop: 2,
-  },
   previewCard: {
     flex: 1,
-    marginTop: 16,
+    marginTop: 8,
     padding: 10,
     borderRadius: 26,
     backgroundColor: colors.surface,
@@ -618,8 +807,13 @@ const s = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: colors.cameraBlack,
   },
-  playerVideo: {
+  playerVideoByWidth: {
     width: '100%',
+    aspectRatio: 9 / 16,
+    flexShrink: 0,
+  },
+  playerVideoByHeight: {
+    height: '100%',
     aspectRatio: 9 / 16,
     flexShrink: 0,
   },
@@ -834,6 +1028,13 @@ const s = StyleSheet.create({
     color: 'white',
     marginTop: 5,
   },
+  openingPrompt: {
+    fontSize: 15,
+    lineHeight: 21,
+    fontWeight: '900',
+    color: '#FFF1A8',
+    marginTop: 5,
+  },
   hint: { fontSize: 11, color: 'rgba(255,255,255,.72)', marginTop: 8 },
   cameraError: {
     position: 'absolute',
@@ -870,5 +1071,11 @@ const s = StyleSheet.create({
     backgroundColor: colors.coral,
   },
   stop: { backgroundColor: colors.coral },
+  stopInner: {
+    width: 32,
+    height: 32,
+    borderRadius: 7,
+    backgroundColor: 'white',
+  },
   ready: { fontSize: 13, fontWeight: '800', color: 'white', marginTop: 10 },
 });

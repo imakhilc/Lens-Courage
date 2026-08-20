@@ -48,6 +48,28 @@ export function BackButton({ onPress }: { onPress: () => void }) {
     </Pressable>
   );
 }
+export function ScreenNavigationBar({
+  label,
+  title,
+  onBack,
+}: {
+  label: string;
+  title: string;
+  onBack: () => void;
+}) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[styles.screenNav, { paddingTop: insets.top + 6 }]}>
+      <BackButton onPress={onBack} />
+      <View style={styles.screenNavCopy}>
+        <Text style={styles.screenNavLabel}>{label}</Text>
+        <Text numberOfLines={1} style={styles.screenNavTitle}>
+          {title}
+        </Text>
+      </View>
+    </View>
+  );
+}
 export function PrimaryButton({
   label,
   onPress,
@@ -142,6 +164,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backButtonPressed: { opacity: 0.65 },
+  screenNav: {
+    zIndex: 30,
+    minHeight: 66,
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    shadowColor: colors.ink,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 8,
+    elevation: 7,
+  },
+  screenNavCopy: { flex: 1 },
+  screenNavLabel: {
+    fontSize: 10,
+    lineHeight: 13,
+    fontWeight: '900',
+    letterSpacing: 1.15,
+    color: colors.primary,
+  },
+  screenNavTitle: {
+    marginTop: 1,
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '900',
+    color: colors.ink,
+  },
   button: {
     height: 58,
     borderRadius: radii.button,
@@ -166,7 +220,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingHorizontal: 16,
     paddingTop: 8,
-    backgroundColor: colors.background,
+    backgroundColor: 'transparent',
   },
   track: {
     height: 10,

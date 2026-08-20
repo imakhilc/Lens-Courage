@@ -1,7 +1,11 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme';
+import {
+  PRIMARY_TAB_BAR_SPACE,
+  PRIMARY_TAB_TOP_SPACE,
+} from '../components/PrimaryTabBar';
 export function PlaceholderScreen({
   title,
   subtitle,
@@ -9,15 +13,24 @@ export function PlaceholderScreen({
   title: string;
   subtitle: string;
 }) {
+  const insets = useSafeAreaInsets();
   return (
-    <SafeAreaView style={s.root}>
+    <View
+      style={[
+        s.root,
+        {
+          paddingTop: insets.top + PRIMARY_TAB_TOP_SPACE,
+          paddingBottom: insets.bottom + PRIMARY_TAB_BAR_SPACE,
+        },
+      ]}
+    >
       <Text style={s.eye}>YOUR JOURNEY</Text>
       <Text style={s.title}>{title}</Text>
       <View style={s.card}>
         <Text style={s.cardTitle}>Milestone 1 shell</Text>
         <Text style={s.copy}>{subtitle}</Text>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 const s = StyleSheet.create({
@@ -25,7 +38,6 @@ const s = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: 16,
-    paddingTop: 12,
   },
   eye: {
     color: colors.muted,

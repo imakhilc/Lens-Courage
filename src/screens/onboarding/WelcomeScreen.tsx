@@ -31,7 +31,9 @@ export function WelcomeScreen({ navigation }: any) {
         <Card style={styles.hero}>
           <View style={styles.dayRange}>
             <Text style={styles.eyebrow}>DAY 1</Text>
-            <ArrowRight color={colors.primary} size={15} strokeWidth={3} />
+            <View style={styles.dayArrow}>
+              <ArrowRight color={colors.primary} size={16} strokeWidth={3} />
+            </View>
             <Text style={styles.eyebrow}>DAY 30</Text>
           </View>
           <Text style={styles.heroTitle}>Bedroom to{`\n`}public vlog.</Text>
@@ -39,7 +41,7 @@ export function WelcomeScreen({ navigation }: any) {
             The app increases difficulty one safe step at a time.
           </Text>
           <View style={styles.camera}>
-            <Camera color={colors.surface} size={48} strokeWidth={2.4} />
+            <Camera color={colors.surface} size={38} strokeWidth={2.4} />
           </View>
         </Card>
         <View style={styles.benefits}>
@@ -89,12 +91,18 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   hero: {
-    height: 202,
+    height: 164,
     marginTop: 18,
     backgroundColor: '#F1EDFF',
     overflow: 'hidden',
   },
-  dayRange: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  dayRange: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  dayArrow: {
+    width: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   eyebrow: {
     fontSize: 12,
     lineHeight: 15,
@@ -118,12 +126,12 @@ const styles = StyleSheet.create({
   },
   camera: {
     position: 'absolute',
-    right: 22,
-    bottom: 34,
-    width: 94,
-    height: 94,
-    borderRadius: 47,
-    backgroundColor: colors.ink,
+    right: 18,
+    top: 43,
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },

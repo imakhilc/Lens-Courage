@@ -20,6 +20,16 @@ export async function getLocalSessions(uid?: string) {
   return uid ? sessions.filter(session => session.uid === uid) : sessions;
 }
 
+export async function clearLocalSessions(uid: string) {
+  const sessions = await getLocalSessions();
+  const removed = sessions.filter(session => session.uid === uid);
+  await AsyncStorage.setItem(
+    KEY,
+    JSON.stringify(sessions.filter(session => session.uid !== uid)),
+  );
+  return removed;
+}
+
 export function createLocalSessionId() {
   return `session-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }

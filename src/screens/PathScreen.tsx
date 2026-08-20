@@ -8,20 +8,26 @@ import {
   View,
 } from 'react-native';
 import type { ScrollViewInstance } from 'react-native';
-import { Check, ChevronRight, Lock, Star } from 'lucide-react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Check, ChevronRight, Lock, Play, Star } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card, ProgressBar } from '../components/ui';
-import { PRIMARY_TAB_BAR_SPACE } from '../components/PrimaryTabBar';
+import {
+  PRIMARY_TAB_BAR_SPACE,
+  PRIMARY_TAB_TOP_SPACE,
+} from '../components/PrimaryTabBar';
 import { useApp } from '../app/AppProvider';
 import { colors } from '../theme';
+import { Shimmer } from '../components/Shimmer';
 
 export function PathScreen({ navigation }: any) {
+  const insets = useSafeAreaInsets();
   const {
     user,
     challenges,
     challengesLoading,
     challengesError,
     localSessions,
+    localDataLoading,
   } = useApp();
   const scroll = useRef<ScrollViewInstance>(null);
   const current = user?.currentChallengeOrder ?? 1;
@@ -32,6 +38,10 @@ export function PathScreen({ navigation }: any) {
     challenge =>
       challenge.order < current || recordedChallengeIds.has(challenge.id),
   ).length;
+  const pathLoading =
+    challengesLoading ||
+    localDataLoading ||
+    (challenges.length === 0 && !challengesError);
   useEffect(() => {
     const timer = setTimeout(
       () =>
@@ -45,117 +55,164 @@ export function PathScreen({ navigation }: any) {
   }, [current, challenges.length]);
 
   return (
-    <SafeAreaView style={s.safe} edges={['top']}>
+    <View style={s.safe}>
       <ScrollView
         ref={scroll}
-        contentContainerStyle={s.content}
+        contentContainerStyle={[
+          s.content,
+          {
+            paddingTop: insets.top + PRIMARY_TAB_TOP_SPACE,
+            paddingBottom: insets.bottom + PRIMARY_TAB_BAR_SPACE,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <Text style={s.eyebrow}>YOUR COURAGE PATH</Text>
         <View style={s.heading}>
           <View>
             <Text style={s.title}>Stage {user?.currentStage ?? 1}</Text>
-            <Text style={s.subtitle}>{completedCount} of 30 complete</Text>
+            {pathLoading ? (
+              <Shimmer style={s.shimmerSubtitle} />
+            ) : (
+              <Text style={s.subtitle}>{completedCount} of 30 complete</Text>
+            )}
           </View>
-          <Text style={s.count}>{completedCount} / 30</Text>
+          {pathLoading ? (
+            <Shimmer style={s.shimmerCount} />
+          ) : (
+            <Text style={s.count}>{completedCount} / 30</Text>
+          )}
         </View>
-        <ProgressBar progress={completedCount / 30} />
-        {challengesLoading && <Text style={s.message}>Loading your path…</Text>}
+        {pathLoading ? (
+          <Shimmer style={s.shimmerProgress} />
+        ) : (
+          <ProgressBar progress={completedCount / 30} />
+        )}
         {challengesError && <Text style={s.error}>{challengesError}</Text>}
-        {challenges.map((challenge, index) => {
-          const recordedLocally = recordedChallengeIds.has(challenge.id);
-          const complete = challenge.order < current || recordedLocally;
-          const active = challenge.order === current && !recordedLocally;
-          const locked = challenge.order > current;
-          const stageStart =
-            index === 0 || challenges[index - 1].stage !== challenge.stage;
-          return (
-            <View key={challenge.id}>
-              {stageStart && (
-                <Text style={s.stage}>{challenge.stageName.toUpperCase()}</Text>
-              )}
-              <Card
-                style={[
-                  s.node,
-                  active && s.activeNode,
-                  challenge.boss && s.bossNode,
-                ]}
-              >
-                <View
+        {pathLoading ? (
+          <View style={s.shimmerPath}>
+            {Array.from({ length: 6 }, (_, index) => (
+              <Shimmer key={index} style={s.shimmerNode} />
+            ))}
+          </View>
+        ) : (
+          challenges.map((challenge, index) => {
+            const recordedSession = localSessions.find(
+              session => session.challengeId === challenge.id,
+            );
+            const recordedLocally = Boolean(recordedSession);
+            const complete = challenge.order < current || recordedLocally;
+            const active = challenge.order === current && !recordedLocally;
+            const locked = challenge.order > current;
+            const stageStart =
+              index === 0 || challenges[index - 1].stage !== challenge.stage;
+            return (
+              <View key={challenge.id}>
+                {stageStart && (
+                  <Text style={s.stage}>
+                    {challenge.stageName.toUpperCase()}
+                  </Text>
+                )}
+                <Card
                   style={[
-                    s.nodeIcon,
-                    complete && s.completeIcon,
-                    active && s.activeIcon,
-                    locked && s.lockedIcon,
+                    s.node,
+                    active && s.activeNode,
+                    challenge.boss && s.bossNode,
                   ]}
                 >
-                  {complete ? (
-                    <Check color="white" size={20} strokeWidth={3} />
-                  ) : locked ? (
-                    <Lock color={colors.muted} size={17} />
-                  ) : challenge.boss ? (
-                    <Star color="white" size={21} fill="white" />
-                  ) : (
-                    <Text style={s.nodeNumber}>{challenge.order}</Text>
-                  )}
-                </View>
-                <View style={s.nodeCopy}>
-                  <Text style={s.nodeTitle}>{challenge.title}</Text>
-                  <Text style={s.nodeSubtitle}>
-                    {challenge.targetDurationSec} sec · +{challenge.rewardCP} CP
-                  </Text>
-                </View>
-                {recordedLocally ? (
-                  <View style={s.recordedPill}>
-                    <Check color={colors.teal} size={14} strokeWidth={3} />
-                    <Text style={s.recordedText}>Recorded</Text>
-                  </View>
-                ) : !locked ? (
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() =>
-                      navigation.navigate('ChallengeDetail', {
-                        challengeId: challenge.id,
-                      })
-                    }
-                    style={({ pressed }) => [
-                      s.nodeAction,
-                      active ? s.startAction : s.reviewAction,
-                      pressed && s.actionPressed,
+                  <View
+                    style={[
+                      s.nodeIcon,
+                      complete && s.completeIcon,
+                      active && s.activeIcon,
+                      locked && s.lockedIcon,
                     ]}
                   >
-                    <Text
-                      style={active ? s.startActionText : s.reviewActionText}
-                    >
-                      {complete ? 'Review' : 'Start'}
+                    {complete ? (
+                      <Check color="white" size={20} strokeWidth={3} />
+                    ) : locked ? (
+                      <Lock color={colors.muted} size={17} />
+                    ) : challenge.boss ? (
+                      <Star color="white" size={21} fill="white" />
+                    ) : (
+                      <Text style={s.nodeNumber}>{challenge.order}</Text>
+                    )}
+                  </View>
+                  <View style={s.nodeCopy}>
+                    <Text style={s.nodeTitle}>{challenge.title}</Text>
+                    <Text style={s.nodeSubtitle}>
+                      {challenge.targetDurationSec} sec · +{challenge.rewardCP}{' '}
+                      CP
                     </Text>
-                    <ChevronRight
-                      color={active ? 'white' : colors.primary}
-                      size={15}
-                      strokeWidth={3}
-                    />
-                  </Pressable>
-                ) : (
-                  <Pressable
-                    accessibilityLabel={`Challenge ${challenge.order} locked`}
-                    hitSlop={8}
-                    onPress={() =>
-                      ToastAndroid.show(
-                        `Finish Challenge ${current} first.`,
-                        ToastAndroid.SHORT,
-                      )
-                    }
-                    style={s.lockedAction}
-                  >
-                    <Lock color={colors.muted} size={14} strokeWidth={2.5} />
-                  </Pressable>
-                )}
-              </Card>
-            </View>
-          );
-        })}
+                  </View>
+                  {recordedLocally ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() =>
+                        navigation.navigate('LocalRecording', {
+                          sessionId: recordedSession?.id,
+                        })
+                      }
+                      style={({ pressed }) => [
+                        s.recordedPill,
+                        pressed && s.actionPressed,
+                      ]}
+                    >
+                      <Play
+                        color={colors.teal}
+                        fill={colors.teal}
+                        size={14}
+                        strokeWidth={2.5}
+                      />
+                      <Text style={s.recordedText}>Recorded</Text>
+                    </Pressable>
+                  ) : !locked ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() =>
+                        navigation.navigate('ChallengeDetail', {
+                          challengeId: challenge.id,
+                        })
+                      }
+                      style={({ pressed }) => [
+                        s.nodeAction,
+                        active ? s.startAction : s.reviewAction,
+                        pressed && s.actionPressed,
+                      ]}
+                    >
+                      <Text
+                        style={active ? s.startActionText : s.reviewActionText}
+                      >
+                        {complete ? 'Review' : 'Start'}
+                      </Text>
+                      <ChevronRight
+                        color={active ? 'white' : colors.primary}
+                        size={15}
+                        strokeWidth={3}
+                      />
+                    </Pressable>
+                  ) : (
+                    <Pressable
+                      accessibilityLabel={`Challenge ${challenge.order} locked`}
+                      hitSlop={8}
+                      onPress={() =>
+                        ToastAndroid.show(
+                          `Finish Challenge ${current} first.`,
+                          ToastAndroid.SHORT,
+                        )
+                      }
+                      style={s.lockedAction}
+                    >
+                      <Lock color={colors.muted} size={14} strokeWidth={2.5} />
+                    </Pressable>
+                  )}
+                </Card>
+              </View>
+            );
+          })
+        )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -163,8 +220,6 @@ const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   content: {
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: PRIMARY_TAB_BAR_SPACE,
   },
   eyebrow: {
     fontSize: 12,
@@ -181,6 +236,11 @@ const s = StyleSheet.create({
   },
   title: { fontSize: 31, fontWeight: '900', color: colors.ink },
   subtitle: { fontSize: 13, color: colors.muted, marginTop: 2 },
+  shimmerSubtitle: { width: 112, height: 13, borderRadius: 6, marginTop: 5 },
+  shimmerCount: { width: 64, height: 34, borderRadius: 99 },
+  shimmerProgress: { height: 10, borderRadius: 99 },
+  shimmerPath: { gap: 9, marginTop: 22 },
+  shimmerNode: { height: 68, borderRadius: 20 },
   count: {
     fontWeight: '900',
     color: colors.primaryDark,
