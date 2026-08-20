@@ -1,10 +1,17 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { Clock3, LockKeyhole } from 'lucide-react-native';
+import {
+  Alert,
+  NativeModules,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { Clock3, LockKeyhole, Share2 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '../app/AppProvider';
-import { ScreenNavigationBar } from '../components/ui';
-import { colors } from '../theme';
+import { FloatingActionDock, ScreenNavigationBar } from '../components/ui';
+import { cardShadow, colors } from '../theme';
 import { RecordedTakePreview } from './RecordingScreen';
 
 const formatDuration = (durationMs: number) => {
@@ -12,12 +19,34 @@ const formatDuration = (durationMs: number) => {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 };
 
+const shareVideo = NativeModules.LensCourageShareVideo as {
+  share: (path: string, title: string) => Promise<void>;
+} | null;
+
 export function LocalRecordingScreen({ navigation, route }: any) {
   const { localSessions, challenges } = useApp();
   const session = localSessions.find(
     item => item.id === route.params?.sessionId,
   );
   const challenge = challenges.find(item => item.id === session?.challengeId);
+  const openShareSheet = async () => {
+    if (!session) return;
+    if (!shareVideo) {
+      Alert.alert(
+        'Rebuild required',
+        'Rebuild the Android app to enable sharing.',
+      );
+      return;
+    }
+    try {
+      await shareVideo.share(session.localVideoPath, 'Share your courage rep');
+    } catch (cause) {
+      Alert.alert(
+        'Could not share video',
+        cause instanceof Error ? cause.message : 'Please try again.',
+      );
+    }
+  };
 
   if (!session) {
     return (
@@ -72,6 +101,17 @@ export function LocalRecordingScreen({ navigation, route }: any) {
           </Text>
         </View>
       </View>
+      <FloatingActionDock>
+        <Pressable
+          accessibilityLabel="Share recorded video"
+          accessibilityRole="button"
+          onPress={openShareSheet}
+          style={({ pressed }) => [s.shareButton, pressed && s.sharePressed]}
+        >
+          <Share2 color={colors.surface} size={20} strokeWidth={2.6} />
+          <Text style={s.shareText}>Share video</Text>
+        </Pressable>
+      </FloatingActionDock>
     </SafeAreaView>
   );
 }
@@ -83,6 +123,7 @@ const s = StyleSheet.create({
     paddingBottom: 132,
   },
   videoCard: {
+    ...cardShadow,
     flex: 1,
     marginHorizontal: 16,
     marginTop: 8,
@@ -126,6 +167,19 @@ const s = StyleSheet.create({
     gap: 7,
   },
   privacyText: { fontSize: 12, color: colors.muted },
+  shareButton: {
+    height: 58,
+    borderRadius: 18,
+    borderBottomWidth: 5,
+    borderBottomColor: colors.primaryDark,
+    backgroundColor: colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  sharePressed: { transform: [{ translateY: 2 }], borderBottomWidth: 3 },
+  shareText: { color: colors.surface, fontSize: 17, fontWeight: '800' },
   unavailable: {
     flex: 1,
     alignItems: 'center',

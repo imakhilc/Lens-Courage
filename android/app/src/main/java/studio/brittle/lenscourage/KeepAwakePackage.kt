@@ -7,7 +7,11 @@ import com.facebook.react.uimanager.ViewManager
 
 class KeepAwakePackage : ReactPackage {
   override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> =
-    listOf(KeepAwakeModule(reactContext), DevDataModule(reactContext))
+    listOf(
+      KeepAwakeModule(reactContext),
+      DevDataModule(reactContext),
+      ShareVideoModule(reactContext),
+    )
 
   override fun createViewManagers(
     reactContext: ReactApplicationContext,

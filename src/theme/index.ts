@@ -17,3 +17,10 @@ export const colors = {
 };
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 18, xl: 24, xxl: 32 };
 export const radii = { button: 18, card: 24, smallCard: 18, pill: 999 };
+export const cardShadow = {
+  shadowColor: colors.ink,
+  shadowOpacity: 0.07,
+  shadowRadius: 16,
+  shadowOffset: { width: 0, height: 8 },
+  elevation: 3,
+};

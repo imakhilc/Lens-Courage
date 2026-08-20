@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../theme';
+import { cardShadow, colors } from '../theme';
 import {
   PRIMARY_TAB_BAR_SPACE,
   PRIMARY_TAB_TOP_SPACE,
@@ -47,6 +47,7 @@ const s = StyleSheet.create({
   },
   title: { fontSize: 32, fontWeight: '900', color: colors.ink, marginTop: 6 },
   card: {
+    ...cardShadow,
     marginTop: 18,
     padding: 16,
     backgroundColor: 'white',

@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft } from 'lucide-react-native';
-import { colors, radii } from '../theme';
+import { cardShadow, colors, radii } from '../theme';
 
 export function BrandMark({ size = 42 }: { size?: number }) {
   return (
@@ -142,16 +142,12 @@ const styles = StyleSheet.create({
     top: 8,
   },
   card: {
+    ...cardShadow,
     backgroundColor: colors.surface,
     borderRadius: radii.card,
     borderWidth: 1,
     borderColor: colors.border,
     padding: 16,
-    shadowColor: colors.ink,
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 2,
   },
   backButton: {
     width: 42,

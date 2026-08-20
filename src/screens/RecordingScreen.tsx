@@ -47,7 +47,7 @@ import {
   ScreenNavigationBar,
 } from '../components/ui';
 import { useApp } from '../app/AppProvider';
-import { colors } from '../theme';
+import { cardShadow, colors } from '../theme';
 import {
   createLocalSessionId,
   saveLocalSession,
@@ -780,6 +780,7 @@ const s = StyleSheet.create({
     paddingBottom: 142,
   },
   previewCard: {
+    ...cardShadow,
     flex: 1,
     marginTop: 8,
     padding: 10,
@@ -787,11 +788,6 @@ const s = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    shadowColor: colors.ink,
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
   },
   previewVideo: {
     flex: 1,
