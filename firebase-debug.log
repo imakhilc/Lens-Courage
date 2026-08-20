@@ -1,0 +1,149 @@
+[debug] [2026-08-20T09:36:10.967Z] ----------------------------------------------------------------------
+[debug] [2026-08-20T09:36:10.968Z] Command:       /Users/imakhilc/.nvm/versions/node/v22.18.0/bin/node /Users/imakhilc/.nvm/versions/node/v22.18.0/bin/firebase deploy --only firestore:rules --project lens-courage
+[debug] [2026-08-20T09:36:10.969Z] CLI Version:   15.18.0
+[debug] [2026-08-20T09:36:10.969Z] Platform:      darwin
+[debug] [2026-08-20T09:36:10.969Z] Node Version:  v22.18.0
+[debug] [2026-08-20T09:36:10.969Z] Time:          Thu Aug 20 2026 15:06:10 GMT+0530 (India Standard Time)
+[debug] [2026-08-20T09:36:10.969Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-08-20T09:36:11.849Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-08-20T09:36:11.850Z] > authorizing via signed-in user (akhil.another@gmail.com)
+[debug] [2026-08-20T09:36:11.850Z] [iam] checking project lens-courage for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2026-08-20T09:36:11.851Z] Checked if tokens are valid: false, expires at: 1786448000498
+[debug] [2026-08-20T09:36:11.851Z] Checked if tokens are valid: false, expires at: 1786448000498
+[debug] [2026-08-20T09:36:11.851Z] > refreshing access token with scopes: []
+[debug] [2026-08-20T09:36:11.852Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-08-20T09:36:11.852Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-08-20T09:36:12.139Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-08-20T09:36:12.139Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-08-20T09:36:12.155Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/lens-courage:testIamPermissions [none]
+[debug] [2026-08-20T09:36:12.155Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/lens-courage:testIamPermissions  x-goog-user-project=lens-courage
+[debug] [2026-08-20T09:36:12.156Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/lens-courage:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[debug] [2026-08-20T09:36:13.884Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/lens-courage:testIamPermissions 403
+[debug] [2026-08-20T09:36:13.884Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/lens-courage:testIamPermissions {"error":{"code":403,"message":"Caller does not have required permission to use project lens-courage. Grant the caller the roles/serviceusage.serviceUsageConsumer role, or a custom role with the serviceusage.services.use permission, by visiting https://console.developers.google.com/iam-admin/iam?project=lens-courage and then retry. Propagation of the new permission may take a few minutes.","status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"USER_PROJECT_DENIED","domain":"googleapis.com","metadata":{"consumer":"projects/lens-courage","consoleUrl":"https://console.developers.google.com/iam-admin/iam?project=lens-courage","service":"cloudresourcemanager.googleapis.com","containerInfo":"lens-courage"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Caller does not have required permission to use project lens-courage. Grant the caller the roles/serviceusage.serviceUsageConsumer role, or a custom role with the serviceusage.services.use permission, by visiting https://console.developers.google.com/iam-admin/iam?project=lens-courage and then retry. Propagation of the new permission may take a few minutes."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developer console IAM admin","url":"https://console.developers.google.com/iam-admin/iam?project=lens-courage"}]}]}}
+[debug] [2026-08-20T09:36:13.886Z] [iam] error while checking permissions, command may fail: Request to https://cloudresourcemanager.googleapis.com/v1/projects/lens-courage:testIamPermissions had HTTP Error: 403, Caller does not have required permission to use project lens-courage. Grant the caller the roles/serviceusage.serviceUsageConsumer role, or a custom role with the serviceusage.services.use permission, by visiting https://console.developers.google.com/iam-admin/iam?project=lens-courage and then retry. Propagation of the new permission may take a few minutes.
+[info] 
+[info] === Deploying to 'lens-courage'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-08-20T09:36:13.889Z] Checked if tokens are valid: true, expires at: 1787222171139
+[debug] [2026-08-20T09:36:13.889Z] Checked if tokens are valid: true, expires at: 1787222171139
+[debug] [2026-08-20T09:36:13.889Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/lens-courage/services/firestore.googleapis.com [none]
+[debug] [2026-08-20T09:36:13.889Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/lens-courage/services/firestore.googleapis.com  x-goog-user-project=lens-courage
+[debug] [2026-08-20T09:36:15.725Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/lens-courage/services/firestore.googleapis.com 403
+[debug] [2026-08-20T09:36:15.726Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/lens-courage/services/firestore.googleapis.com [omitted]
+[error] 
+[error] Error: Request to https://serviceusage.googleapis.com/v1/projects/lens-courage/services/firestore.googleapis.com had HTTP Error: 403, Caller does not have required permission to use project lens-courage. Grant the caller the roles/serviceusage.serviceUsageConsumer role, or a custom role with the serviceusage.services.use permission, by visiting https://console.developers.google.com/iam-admin/iam?project=lens-courage and then retry. Propagation of the new permission may take a few minutes.
+[debug] [2026-08-20T09:36:15.728Z] Error Context: {
+  "body": {
+    "error": {
+      "code": 403,
+      "message": "Caller does not have required permission to use project lens-courage. Grant the caller the roles/serviceusage.serviceUsageConsumer role, or a custom role with the serviceusage.services.use permission, by visiting https://console.developers.google.com/iam-admin/iam?project=lens-courage and then retry. Propagation of the new permission may take a few minutes.",
+      "status": "PERMISSION_DENIED",
+      "details": [
+        {
+          "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+          "reason": "USER_PROJECT_DENIED",
+          "domain": "googleapis.com",
+          "metadata": {
+            "consoleUrl": "https://console.developers.google.com/iam-admin/iam?project=lens-courage",
+            "containerInfo": "lens-courage",
+            "service": "serviceusage.googleapis.com",
+            "consumer": "projects/lens-courage"
+          }
+        },
+        {
+          "@type": "type.googleapis.com/google.rpc.LocalizedMessage",
+          "locale": "en-US",
+          "message": "Caller does not have required permission to use project lens-courage. Grant the caller the roles/serviceusage.serviceUsageConsumer role, or a custom role with the serviceusage.services.use permission, by visiting https://console.developers.google.com/iam-admin/iam?project=lens-courage and then retry. Propagation of the new permission may take a few minutes."
+        },
+        {
+          "@type": "type.googleapis.com/google.rpc.Help",
+          "links": [
+            {
+              "description": "Google developer console IAM admin",
+              "url": "https://console.developers.google.com/iam-admin/iam?project=lens-courage"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "response": {
+    "statusCode": 403
+  }
+}
+[debug] [2026-08-20T09:36:52.491Z] ----------------------------------------------------------------------
+[debug] [2026-08-20T09:36:52.493Z] Command:       /Users/imakhilc/.nvm/versions/node/v22.18.0/bin/node /Users/imakhilc/.nvm/versions/node/v22.18.0/bin/firebase deploy --only firestore:rules --project lens-courage
+[debug] [2026-08-20T09:36:52.493Z] CLI Version:   15.18.0
+[debug] [2026-08-20T09:36:52.493Z] Platform:      darwin
+[debug] [2026-08-20T09:36:52.493Z] Node Version:  v22.18.0
+[debug] [2026-08-20T09:36:52.493Z] Time:          Thu Aug 20 2026 15:06:52 GMT+0530 (India Standard Time)
+[debug] [2026-08-20T09:36:52.493Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-08-20T09:36:53.261Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-08-20T09:36:53.262Z] > authorizing via signed-in user (studiobrittle@gmail.com)
+[debug] [2026-08-20T09:36:53.262Z] [iam] checking project lens-courage for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2026-08-20T09:36:53.263Z] No OAuth tokens found
+[debug] [2026-08-20T09:36:53.263Z] No OAuth tokens found
+[debug] [2026-08-20T09:36:53.263Z] > refreshing access token with scopes: []
+[debug] [2026-08-20T09:36:53.264Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-08-20T09:36:53.264Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-08-20T09:36:53.437Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-08-20T09:36:53.437Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-08-20T09:36:53.447Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/lens-courage:testIamPermissions [none]
+[debug] [2026-08-20T09:36:53.447Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/lens-courage:testIamPermissions  x-goog-user-project=lens-courage
+[debug] [2026-08-20T09:36:53.447Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/lens-courage:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[debug] [2026-08-20T09:36:55.053Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/lens-courage:testIamPermissions 200
+[debug] [2026-08-20T09:36:55.054Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/lens-courage:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[info] 
+[info] === Deploying to 'lens-courage'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-08-20T09:36:55.057Z] Checked if tokens are valid: true, expires at: 1787222212437
+[debug] [2026-08-20T09:36:55.057Z] Checked if tokens are valid: true, expires at: 1787222212437
+[debug] [2026-08-20T09:36:55.057Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/lens-courage/services/firestore.googleapis.com [none]
+[debug] [2026-08-20T09:36:55.058Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/lens-courage/services/firestore.googleapis.com  x-goog-user-project=lens-courage
+[debug] [2026-08-20T09:36:56.771Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/lens-courage/services/firestore.googleapis.com 200
+[debug] [2026-08-20T09:36:56.771Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/lens-courage/services/firestore.googleapis.com [omitted]
+[info] ✔  firestore: required API firestore.googleapis.com is enabled 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-08-20T09:36:56.784Z] Checked if tokens are valid: true, expires at: 1787222212437
+[debug] [2026-08-20T09:36:56.784Z] Checked if tokens are valid: true, expires at: 1787222212437
+[debug] [2026-08-20T09:36:56.784Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/lens-courage/databases/(default) [none]
+[debug] [2026-08-20T09:36:58.609Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/lens-courage/databases/(default) 200
+[debug] [2026-08-20T09:36:58.609Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/lens-courage/databases/(default) {"name":"projects/lens-courage/databases/(default)","uid":"3d9175a6-ae3f-4c1f-8742-7dd8b35d3010","createTime":"2026-08-20T09:26:33.954490Z","updateTime":"2026-08-20T09:26:33.954490Z","locationId":"nam5","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-08-20T09:26:33.954490Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"s","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"IMSWkJf0rpYDMJS+g+/xrpYD"}
+[info] i  cloud.firestore: checking firebase/firestore.rules for compilation errors... 
+[debug] [2026-08-20T09:36:58.611Z] Checked if tokens are valid: true, expires at: 1787222212437
+[debug] [2026-08-20T09:36:58.611Z] Checked if tokens are valid: true, expires at: 1787222212437
+[debug] [2026-08-20T09:36:58.612Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/lens-courage:test [none]
+[debug] [2026-08-20T09:36:58.612Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/lens-courage:test [omitted]
+[debug] [2026-08-20T09:37:00.217Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/lens-courage:test 200
+[debug] [2026-08-20T09:37:00.217Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/lens-courage:test {}
+[info] ✔  cloud.firestore: rules file firebase/firestore.rules compiled successfully 
+[debug] [2026-08-20T09:37:00.219Z] Checked if tokens are valid: true, expires at: 1787222212437
+[debug] [2026-08-20T09:37:00.219Z] Checked if tokens are valid: true, expires at: 1787222212437
+[debug] [2026-08-20T09:37:00.220Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/lens-courage/releases pageSize=10&pageToken=
+[debug] [2026-08-20T09:37:00.524Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/lens-courage/releases 200
+[debug] [2026-08-20T09:37:00.524Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/lens-courage/releases {"releases":[{"name":"projects/lens-courage/releases/cloud.firestore","rulesetName":"projects/lens-courage/rulesets/0204e8fe-0b68-4fb3-90a2-8923e8a23c9a","createTime":"2026-08-20T09:26:38.100358Z","updateTime":"2026-08-20T09:26:38.100358Z"}]}
+[debug] [2026-08-20T09:37:00.525Z] Checked if tokens are valid: true, expires at: 1787222212437
+[debug] [2026-08-20T09:37:00.525Z] Checked if tokens are valid: true, expires at: 1787222212437
+[debug] [2026-08-20T09:37:00.525Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/lens-courage/rulesets/0204e8fe-0b68-4fb3-90a2-8923e8a23c9a [none]
+[debug] [2026-08-20T09:37:01.874Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/lens-courage/rulesets/0204e8fe-0b68-4fb3-90a2-8923e8a23c9a 200
+[debug] [2026-08-20T09:37:01.875Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/lens-courage/rulesets/0204e8fe-0b68-4fb3-90a2-8923e8a23c9a [omitted]
+[info] i  firestore: uploading rules firebase/firestore.rules... 
+[debug] [2026-08-20T09:37:01.877Z] Checked if tokens are valid: true, expires at: 1787222212437
+[debug] [2026-08-20T09:37:01.877Z] Checked if tokens are valid: true, expires at: 1787222212437
+[debug] [2026-08-20T09:37:01.877Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/lens-courage/rulesets [none]
+[debug] [2026-08-20T09:37:01.877Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/lens-courage/rulesets [omitted]
+[debug] [2026-08-20T09:37:03.359Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/lens-courage/rulesets 200
+[debug] [2026-08-20T09:37:03.359Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/lens-courage/rulesets {"name":"projects/lens-courage/rulesets/b68a9b3b-30c5-4b71-bf3c-f3b885e7eb7a","source":{"files":[{"content":"rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    function signedIn() {\n      return request.auth != null;\n    }\n\n    function isOwner(uid) {\n      return signedIn() && request.auth.uid == uid;\n    }\n\n    match /challenges/{challengeId} {\n      allow read: if signedIn();\n      allow write: if false;\n    }\n\n    match /badges/{badgeId} {\n      allow read: if signedIn();\n      allow write: if false;\n    }\n\n    match /users/{uid} {\n      allow read: if isOwner(uid);\n\n      // A signed-in user may bootstrap only a zero-progress profile.\n      allow create: if isOwner(uid)\n        && request.resource.data.uid == uid\n        && request.resource.data.onboardingComplete == false\n        && request.resource.data.currentChallengeOrder == 1\n        && request.resource.data.completedChallengeCount == 0\n        && request.resource.data.totalCP == 0\n        && request.resource.data.currentStreak == 0\n        && request.resource.data.longestStreak == 0\n        && request.resource.data.currentStage == 1\n        && request.resource.data.keepRecordings == false;\n\n      // Preference-only client updates should ideally be split into a separate settings doc.\n      // For Phase 1, use Cloud Functions for progression/reward mutations.\n      allow update: if isOwner(uid)\n        && request.resource.data.totalCP == resource.data.totalCP\n        && request.resource.data.currentStreak == resource.data.currentStreak\n        && request.resource.data.longestStreak == resource.data.longestStreak\n        && request.resource.data.currentChallengeOrder == resource.data.currentChallengeOrder\n        && request.resource.data.completedChallengeCount == resource.data.completedChallengeCount;\n\n      allow delete: if false;\n\n      match /sessions/{sessionId} {\n        allow read: if isOwner(uid);\n        // Client can create session metadata, but server should own reward/AI fields.\n        allow create: if isOwner(uid);\n        allow update: if isOwner(uid)\n          && request.resource.data.rewardGranted == resource.data.rewardGranted\n          && request.resource.data.rewardCP == resource.data.rewardCP\n          && request.resource.data.analysisStatus == resource.data.analysisStatus\n          && request.resource.data.transcript == resource.data.transcript\n          && request.resource.data.wordCount == resource.data.wordCount\n          && request.resource.data.approximateWpm == resource.data.approximateWpm\n          && request.resource.data.whatWorked == resource.data.whatWorked\n          && request.resource.data.focus == resource.data.focus\n          && request.resource.data.nextTry == resource.data.nextTry;\n        allow delete: if false;\n      }\n\n      match /badges/{badgeId} {\n        allow read: if isOwner(uid);\n        allow write: if false;\n      }\n\n      match /dailyQuests/{dateKey} {\n        allow read: if isOwner(uid);\n        allow write: if false;\n      }\n\n      match /weekly/{weekKey} {\n        allow read: if isOwner(uid);\n        allow write: if false;\n      }\n    }\n  }\n}\n","name":"firebase/firestore.rules"}]},"createTime":"2026-08-20T09:37:03.155279Z","metadata":{"services":["cloud.firestore"]}}
+[debug] [2026-08-20T09:37:03.359Z] [rules] created ruleset projects/lens-courage/rulesets/b68a9b3b-30c5-4b71-bf3c-f3b885e7eb7a
+[debug] [2026-08-20T09:37:03.360Z] [rules] releasing cloud.firestore with ruleset projects/lens-courage/rulesets/b68a9b3b-30c5-4b71-bf3c-f3b885e7eb7a
+[debug] [2026-08-20T09:37:03.361Z] Checked if tokens are valid: true, expires at: 1787222212437
+[debug] [2026-08-20T09:37:03.361Z] Checked if tokens are valid: true, expires at: 1787222212437
+[debug] [2026-08-20T09:37:03.361Z] >>> [apiv2][query] PATCH https://firebaserules.googleapis.com/v1/projects/lens-courage/releases/cloud.firestore [none]
+[debug] [2026-08-20T09:37:03.361Z] >>> [apiv2][body] PATCH https://firebaserules.googleapis.com/v1/projects/lens-courage/releases/cloud.firestore {"release":{"name":"projects/lens-courage/releases/cloud.firestore","rulesetName":"projects/lens-courage/rulesets/b68a9b3b-30c5-4b71-bf3c-f3b885e7eb7a"}}
+[debug] [2026-08-20T09:37:04.886Z] <<< [apiv2][status] PATCH https://firebaserules.googleapis.com/v1/projects/lens-courage/releases/cloud.firestore 200

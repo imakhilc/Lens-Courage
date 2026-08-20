@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    match /challenges/{challengeId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /badges/{badgeId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+
+      // A signed-in user may bootstrap only a zero-progress profile.
+      allow create: if isOwner(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.onboardingComplete == false
+        && request.resource.data.currentChallengeOrder == 1
+        && request.resource.data.completedChallengeCount == 0
+        && request.resource.data.totalCP == 0
+        && request.resource.data.currentStreak == 0
+        && request.resource.data.longestStreak == 0
+        && request.resource.data.currentStage == 1
+        && request.resource.data.keepRecordings == false;
+
+      // Preference-only client updates should ideally be split into a separate settings doc.
+      // For Phase 1, use Cloud Functions for progression/reward mutations.
+      allow update: if isOwner(uid)
+        && request.resource.data.totalCP == resource.data.totalCP
+        && request.resource.data.currentStreak == resource.data.currentStreak
+        && request.resource.data.longestStreak == resource.data.longestStreak
+        && request.resource.data.currentChallengeOrder == resource.data.currentChallengeOrder
+        && request.resource.data.completedChallengeCount == resource.data.completedChallengeCount;
+
+      allow delete: if false;
+
+      match /sessions/{sessionId} {
+        allow read: if isOwner(uid);
+        // Client can create session metadata, but server should own reward/AI fields.
+        allow create: if isOwner(uid);
+        allow update: if isOwner(uid)
+          && request.resource.data.rewardGranted == resource.data.rewardGranted
+          && request.resource.data.rewardCP == resource.data.rewardCP
+          && request.resource.data.analysisStatus == resource.data.analysisStatus
+          && request.resource.data.transcript == resource.data.transcript
+          && request.resource.data.wordCount == resource.data.wordCount
+          && request.resource.data.approximateWpm == resource.data.approximateWpm
+          && request.resource.data.whatWorked == resource.data.whatWorked
+          && request.resource.data.focus == resource.data.focus
+          && request.resource.data.nextTry == resource.data.nextTry;
+        allow delete: if false;
+      }
+
+      match /badges/{badgeId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
+      match /dailyQuests/{dateKey} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
+      match /weekly/{weekKey} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+    }
+  }
+}
