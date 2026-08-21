@@ -89,9 +89,6 @@ export function LocalRecordingScreen({ navigation, route }: any) {
                 {formatDuration(session.durationMs)}
               </Text>
             </View>
-            {session.openingPhrase && (
-              <Text style={s.phrase}>“{session.openingPhrase}”</Text>
-            )}
           </View>
         </View>
         <View style={s.privacy}>
@@ -151,13 +148,6 @@ const s = StyleSheet.create({
   },
   detailRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   detailText: { fontSize: 13, fontWeight: '800', color: colors.muted },
-  phrase: {
-    flex: 1,
-    fontSize: 12,
-    fontWeight: '800',
-    color: colors.primaryDark,
-    textAlign: 'right',
-  },
   privacy: {
     marginHorizontal: 20,
     marginBottom: 18,

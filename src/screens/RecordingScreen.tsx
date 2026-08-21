@@ -222,7 +222,7 @@ export function RecordedTakePreview({
 }
 
 export function RecordingScreen({ navigation, route }: any) {
-  const { user, challenges, registerLocalSession, openingPhrase } = useApp();
+  const { user, challenges, registerLocalSession } = useApp();
   const insets = useSafeAreaInsets();
   const challenge = challenges.find(
     item => item.id === route.params?.challengeId,
@@ -515,7 +515,6 @@ export function RecordingScreen({ navigation, route }: any) {
         oneTakeQualified: challenge.oneTakeBonus && retryCount === 0,
         completionStatus: 'recorded',
         localVideoPath: filePath,
-        openingPhrase,
       } as const;
       await saveLocalSession(localSession);
       registerLocalSession(localSession);
@@ -683,9 +682,6 @@ export function RecordingScreen({ navigation, route }: any) {
       </View>
       <View style={s.prompt}>
         <Text style={s.promptLabel}>YOUR PROMPT</Text>
-        {openingPhrase && (
-          <Text style={s.openingPrompt}>Start: “{openingPhrase}”</Text>
-        )}
         <Text style={s.promptText}>{challenge.fullPrompt}</Text>
         <Text style={s.hint}>Look at the lens, not your preview.</Text>
       </View>
@@ -1022,13 +1018,6 @@ const s = StyleSheet.create({
     lineHeight: 23,
     fontWeight: '800',
     color: 'white',
-    marginTop: 5,
-  },
-  openingPrompt: {
-    fontSize: 15,
-    lineHeight: 21,
-    fontWeight: '900',
-    color: '#FFF1A8',
     marginTop: 5,
   },
   hint: { fontSize: 11, color: 'rgba(255,255,255,.72)', marginTop: 8 },

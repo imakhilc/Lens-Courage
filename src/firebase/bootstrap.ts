@@ -113,14 +113,3 @@ export async function finishOnboarding(
   );
   return updated;
 }
-
-export async function saveOpeningPhrasePreference(
-  uid: string,
-  openingPhrase: string,
-) {
-  await setDoc(
-    doc(getFirestore(getApp()), 'users', uid),
-    { openingPhrase, updatedAt: serverTimestamp() },
-    { merge: true },
-  );
-}

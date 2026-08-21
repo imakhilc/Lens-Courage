@@ -9,7 +9,6 @@ export interface OnboardingDraft {
 export interface UserProfile extends OnboardingDraft {
   uid: string;
   displayName?: string;
-  openingPhrase?: string;
   onboardingComplete: boolean;
   timezone: string;
   currentChallengeOrder: number;
@@ -52,5 +51,4 @@ export interface LocalSession {
   oneTakeQualified: boolean;
   completionStatus: 'recorded';
   localVideoPath: string;
-  openingPhrase?: string;
 }
